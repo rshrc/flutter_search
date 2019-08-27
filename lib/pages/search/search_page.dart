@@ -27,8 +27,6 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
 
-    TextEditingController _searchQueryController = TextEditingController();
-
     print("build function: ${searchResults.toString()}");
 
     return MaterialApp(
@@ -43,7 +41,6 @@ class _SearchPageState extends State<SearchPage> {
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: TextField(
-                controller: _searchQueryController,
                 onChanged: (val) {
                   searchResults.clear();
                   searchDjango(val);
