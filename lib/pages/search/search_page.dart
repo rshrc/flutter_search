@@ -1,5 +1,6 @@
 import 'package:flutter_search/services/search_service.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SearchPage extends StatefulWidget {
@@ -10,6 +11,34 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   var queryResultSet = [];
   var tempSearchStore = [];
+
+  searchDjango(value) async {
+    // Search Django
+//    SearchService.searchDjangoApi(value).then((value) {
+//      List<dyanmic> data = jsonDecode(value);
+//      data.forEach((f)) {
+//
+//      }
+//      print("Line 20: search_page.dart ${data['question']}");
+//      setState(() {
+//        queryResultSet.add(data[])
+//      });
+//    });
+    SearchService.searchDjangoApi(value).then((res) {
+      // print("Line 29: ${res[0]}");
+
+      List<dynamic> jRes = jsonDecode(res);
+      setState(() {
+        jRes.forEach((value) {
+          print(value);
+          print(value.runtimeType.toString());
+          queryResultSet.add(value);
+        });
+      });
+
+      print(jRes.runtimeType.toString());
+    });
+  }
 
   initiateSearch(value) {
     if (value.length == 0) {
@@ -64,7 +93,8 @@ class _SearchPageState extends State<SearchPage> {
               padding: const EdgeInsets.all(10.0),
               child: TextField(
                 onChanged: (val) {
-                  initiateSearch(val);
+                  queryResultSet.clear();
+                  searchDjango(val);
                 },
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.only(left: 25.0),
@@ -74,7 +104,7 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(Icons.search),
-                    onPressed: (){
+                    onPressed: () {
                       // initialte search
                     },
                   ),
@@ -84,17 +114,24 @@ class _SearchPageState extends State<SearchPage> {
             SizedBox(
               height: 10.0,
             ),
-            GridView.count(
-                padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                crossAxisCount: 2,
-                crossAxisSpacing: 4.0,
-                mainAxisSpacing: 4.0,
-                primary: false,
-                shrinkWrap: true,
-                children: queryResultSet.map((element) {
-                  print("search_page.dart: $element");
-                  return buildResultCard(element);
-                }).toList())
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: queryResultSet.length,
+              itemBuilder: (BuildContext context, int index) {
+                return buildResultCard(queryResultSet[index]);
+              },
+            )
+//            GridView.count(
+//                padding: EdgeInsets.only(left: 10.0, right: 10.0),
+//                crossAxisCount: 2,
+//                crossAxisSpacing: 4.0,
+//                mainAxisSpacing: 4.0,
+//                primary: false,
+//                shrinkWrap: true,
+//                children: queryResultSet.map((element) {
+//                  print("Line 129: search_page.dart: $element");
+//                  return buildResultCard(element.toString());
+//                }).toList())
           ],
         ),
       ),
@@ -111,7 +148,7 @@ Widget buildResultCard(data) {
     child: Container(
       child: Center(
         child: Text(
-          data['document-field'],
+          data['question_text'],
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.black,
