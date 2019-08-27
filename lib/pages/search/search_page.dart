@@ -1,7 +1,6 @@
 import 'package:flutter_search/services/search_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SearchPage extends StatefulWidget {
   @override
@@ -9,82 +8,34 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  var queryResultSet = [];
-  var tempSearchStore = [];
+  List<dynamic> searchResults = [];
 
   searchDjango(value) async {
-    // Search Django
-//    SearchService.searchDjangoApi(value).then((value) {
-//      List<dyanmic> data = jsonDecode(value);
-//      data.forEach((f)) {
-//
-//      }
-//      print("Line 20: search_page.dart ${data['question']}");
-//      setState(() {
-//        queryResultSet.add(data[])
-//      });
-//    });
-    SearchService.searchDjangoApi(value).then((res) {
-      // print("Line 29: ${res[0]}");
-
-      List<dynamic> jRes = jsonDecode(res);
+    SearchService.searchDjangoApi(value).then((responseBody) {
+      List<dynamic> data = jsonDecode(responseBody);
       setState(() {
-        jRes.forEach((value) {
-          print(value);
-          print(value.runtimeType.toString());
-          queryResultSet.add(value);
+        data.forEach((value) {
+          searchResults.add(value);
         });
       });
 
-      print(jRes.runtimeType.toString());
+      print(data.runtimeType.toString());
+      print(searchResults.runtimeType.toString());
     });
-  }
-
-  initiateSearch(value) {
-    if (value.length == 0) {
-      setState(() {
-        queryResultSet = [];
-        tempSearchStore = [];
-      });
-    }
-
-    var targetValue = value.substring(0, 1) + value.substring(1);
-
-    print("search_page.dart: initiateSearch: $targetValue");
-
-    if (queryResultSet.length == 0 && value.length == 1) {
-      SearchService().searchByField(value).then((QuerySnapshot docs) {
-        for (int i = 0; i < docs.documents.length; ++i) {
-          print("search_page.dart: initiateSearch: ${docs.documents[i].data}");
-          setState(() {
-            queryResultSet.add(docs.documents[i].data);
-          });
-        }
-      });
-    } else {
-      tempSearchStore = [];
-      queryResultSet.forEach((element) {
-        if (element['document-field'].startWith(targetValue)) {
-          setState(() {
-            print("search_page.dart: initiateSearch: $element");
-            print("search_page.dart: elemnt type: ${element.runtimeType}");
-            print("search_page.dart ${element['document-field']}");
-            tempSearchStore.add(element);
-          });
-        }
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    print("build function: ${queryResultSet.toString()}");
+
+    TextEditingController _searchQueryController = TextEditingController();
+
+    print("build function: ${searchResults.toString()}");
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          title: Text("Flutter Search"),
+          title: Text("Django API Search"),
           centerTitle: true,
         ),
         body: ListView(
@@ -92,8 +43,9 @@ class _SearchPageState extends State<SearchPage> {
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: TextField(
+                controller: _searchQueryController,
                 onChanged: (val) {
-                  queryResultSet.clear();
+                  searchResults.clear();
                   searchDjango(val);
                 },
                 decoration: InputDecoration(
@@ -105,7 +57,7 @@ class _SearchPageState extends State<SearchPage> {
                   suffixIcon: IconButton(
                     icon: Icon(Icons.search),
                     onPressed: () {
-                      // initialte search
+                      // initiate search on press
                     },
                   ),
                 ),
@@ -116,22 +68,11 @@ class _SearchPageState extends State<SearchPage> {
             ),
             ListView.builder(
               shrinkWrap: true,
-              itemCount: queryResultSet.length,
+              itemCount: searchResults.length,
               itemBuilder: (BuildContext context, int index) {
-                return buildResultCard(queryResultSet[index]);
+                return buildResultCard(searchResults[index]);
               },
-            )
-//            GridView.count(
-//                padding: EdgeInsets.only(left: 10.0, right: 10.0),
-//                crossAxisCount: 2,
-//                crossAxisSpacing: 4.0,
-//                mainAxisSpacing: 4.0,
-//                primary: false,
-//                shrinkWrap: true,
-//                children: queryResultSet.map((element) {
-//                  print("Line 129: search_page.dart: $element");
-//                  return buildResultCard(element.toString());
-//                }).toList())
+            ),
           ],
         ),
       ),
@@ -140,22 +81,16 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 Widget buildResultCard(data) {
-  print("search_page.dart: $data and type: ${data.runtimeType}");
-
-  return Card(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-    elevation: 2.0,
-    child: Container(
-      child: Center(
-        child: Text(
-          data['question_text'],
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20.0,
-          ),
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Column(
+      children: <Widget>[
+        ListTile(
+          title: Text(data['question_text']),
+          subtitle: Text(data['author']),
         ),
-      ),
+        Divider(color: Colors.black)
+      ],
     ),
   );
 }
